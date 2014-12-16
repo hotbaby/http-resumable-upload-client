@@ -7,7 +7,7 @@ local host = '192.168.1.7'
 local port = 8080
 
 local path = './'
-local file_name = '4.mp4'
+local file_name = '2.mp4'
 local block_max_size = 2^16
 local remote_path = '/home/yy/resumable-upload'
 
@@ -80,6 +80,8 @@ function http_response(client)
     local header_table = {}
     local body
     local body_size
+    local buffer_line
+    local err_msg
 
     header_table = http_response_receive_header(client)
     if header_table ~= nil then
@@ -89,6 +91,13 @@ function http_response(client)
     end
 
     body_size = header_table['Content-Length']
+    if body_size == nil then
+        if header_table['Transfer-Encoding'] == 'chunked' then
+            buffer_line, err_msg = client:receive('*l')
+            body_size = tonumber(string.gsub(buffer_line, ";.*", ""), 16)
+        end
+    end
+
     body = http_response_receive_body(client, body_size)
     print('info response body:', body)
 
@@ -204,7 +213,7 @@ while true do
     req_header = http_header_add_field(req_header, HTTP_HOST, host)
     req_header = http_header_add_field(req_header, HTTP_CONTENT_LENGTH, tostring(block_size))
     req_header = http_header_add_field(req_header, HTTP_CONTENT_TYPE, 'application/octet-stream')
-    req_header = http_header_add_field(req_header, HTTP_CONTENT_DISPOSITION, 'attachment;'..' file='..file_name..';'..' path=/home/yy/')
+    req_header = http_header_add_field(req_header, HTTP_CONTENT_DISPOSITION, 'attachment;'..' file='..file_name..';'..' path=' .. remote_path)
     req_header = http_header_add_field(req_header, HTTP_SESSION_ID, '1111215056')
 
     local block_range
@@ -236,4 +245,3 @@ end
 
 file:close()
 client:close()
-
