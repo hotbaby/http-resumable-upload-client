@@ -3,13 +3,13 @@
 local socket = require("socket")
 local io = require("io")
 
-local host = '192.168.1.7'
-local port = 8080
+local host = '192.168.1.110'
+local port = 80
 
 local path = './'
-local file_name = '2.mp4'
+local file_name = 'test.doc'
 local block_max_size = 2^16
-local remote_path = '/home/yy/resumable-upload'
+local remote_path = '/root/upload/'
 
 local HTTP_URI = '/upload'
 local HTTP_HOST = 'Host: '
@@ -197,6 +197,7 @@ local file_size_all = file_size(file)
 local cur_left = file_size_all
 local last_left = file_size_all
 local http_headers
+local session_id = math.random(1000000)
 while true do
 
     block = file:read(block_max_size)
@@ -214,7 +215,7 @@ while true do
     req_header = http_header_add_field(req_header, HTTP_CONTENT_LENGTH, tostring(block_size))
     req_header = http_header_add_field(req_header, HTTP_CONTENT_TYPE, 'application/octet-stream')
     req_header = http_header_add_field(req_header, HTTP_CONTENT_DISPOSITION, 'attachment;'..' file='..file_name..';'..' path=' .. remote_path)
-    req_header = http_header_add_field(req_header, HTTP_SESSION_ID, '1111215056')
+    req_header = http_header_add_field(req_header, HTTP_SESSION_ID, session_id)
 
     local block_range
     local block_start = file_size_all - cur_left - block_size
